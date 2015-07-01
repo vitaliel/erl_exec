@@ -55,20 +55,20 @@ end
 
 defmodule Client do
   def run do
-    # {:ok, pid} = Breakout.Exec.start("go", ["run", "src/erl_port/cmd/erl_port/main.go", "--",
-    #   "echo", "hello"])
+    {:ok, pid} = Breakout.Exec.start("./bin/erl_port", ["--",
+      "echo", "hello"])
 
     # {:ok, pid} = Breakout.Exec.start("go", ["run", "src/erl_port/cmd/erl_port/main.go", "--",
     #     "git-upload-pack", "/Users/lz/projects/elixir-train/breakout_sshd/.git"])
 
-    {:ok, pid} = Breakout.Exec.start("go", ["run", "src/erl_port/cmd/erl_port/main.go", "--",
-      "ruby", "gets.rb"])
+    # {:ok, pid} = Breakout.Exec.start("go", ["run", "src/erl_port/cmd/erl_port/main.go", "--",
+    #   "ruby", "gets.rb"])
 
-    spawn fn ->
-      Breakout.Exec.put_input(pid, "Noroc 1\n")
-      Breakout.Exec.put_input(pid, "Noroc 2\n")
-      Breakout.Exec.stop(pid)
-    end
+    # spawn fn ->
+    #   Breakout.Exec.put_input(pid, "Noroc 1\n")
+    #   Breakout.Exec.put_input(pid, "Noroc 2\n")
+    #   Breakout.Exec.stop(pid)
+    # end
 
     loop
   end

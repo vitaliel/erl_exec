@@ -2,6 +2,7 @@ package port
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -15,12 +16,23 @@ func Run() {
 	wwg := &sync.WaitGroup{}
 	file, err := os.OpenFile("driver.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0640)
 	fatal_if(err)
-	logger = log.New(file, "[exec]: ", log.Lmicroseconds|log.Lshortfile)
+	logger = log.New(file, fmt.Sprintf("exec[%d]: ", os.Getpid()), log.Lmicroseconds|log.Lshortfile)
 	flag.Parse()
 	args := flag.Args()
 	logger.Println(args)
-	logger.Println(args[1:])
-	cmd := exec.Command(args[0], args[1:]...)
+
+	if len(args) == 0 {
+		os.Stderr.WriteString("Please pass command as argument\n")
+		os.Exit(-1)
+	}
+
+	options := []string{}
+
+	if len(args) > 1 {
+		options = args[1:]
+	}
+
+	cmd := exec.Command(args[0], options...)
 
 	inputPipe, err := cmd.StdinPipe()
 	if err != nil {
@@ -41,6 +53,8 @@ func Run() {
 	}
 
 	out := make(chan *command)
+	wwg.Add(1)
+
 	go outWriter(wwg, out)
 
 	err = cmd.Start()
@@ -65,6 +79,8 @@ func Run() {
 		logger.Println(err)
 		os.Exit(exitStatus(err))
 	}
+
+	logger.Println("Normal exit.")
 }
 
 func fatal_if(err error) {

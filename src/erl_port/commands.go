@@ -111,12 +111,18 @@ func readLength() uint16 {
 	var b = []byte{0, 0}
 	_, err := io.ReadFull(os.Stdin, b)
 
+	if err == io.EOF {
+		return 0
+	}
+
+	logger.Println("read length bytes: ", b)
+
 	if err != nil {
 		logger.Println("Unexpected read length", err)
 		fatal_if(err)
 	}
 
-	return uint16((b[0] << 8) | b[1])
+	return uint16(b[0])<<8 | uint16(b[1])
 }
 
 func write(msgType byte, data []byte) {
