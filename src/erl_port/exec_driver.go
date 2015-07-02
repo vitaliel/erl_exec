@@ -9,17 +9,27 @@ import (
 	"sync"
 )
 
-var logger *log.Logger
+var (
+	logger *log.Logger
+	debug  = false
+)
 
 func Run() {
 	wg := &sync.WaitGroup{}
 	wwg := &sync.WaitGroup{}
-	file, err := os.OpenFile("driver.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0640)
-	fatal_if(err)
-	logger = log.New(file, fmt.Sprintf("exec[%d]: ", os.Getpid()), log.Lmicroseconds|log.Lshortfile)
+
+	if debug {
+		file, err := os.OpenFile("driver.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0640)
+		fatal_if(err)
+		logger = log.New(file, fmt.Sprintf("exec[%d]: ", os.Getpid()), log.Lmicroseconds|log.Lshortfile)
+	}
+
 	flag.Parse()
 	args := flag.Args()
-	logger.Println(args)
+
+	if debug {
+		logger.Println(args)
+	}
 
 	if len(args) == 0 {
 		os.Stderr.WriteString("Please pass command as argument\n")
@@ -35,20 +45,29 @@ func Run() {
 	cmd := exec.Command(args[0], options...)
 
 	inputPipe, err := cmd.StdinPipe()
+
 	if err != nil {
-		logger.Println(err)
+		if debug {
+			logger.Println(err)
+		}
 		fatal_if(err)
 	}
 
 	outPipe, err := cmd.StdoutPipe()
+
 	if err != nil {
-		logger.Println(err)
+		if debug {
+			logger.Println(err)
+		}
 		fatal_if(err)
 	}
 
 	errPipe, err := cmd.StderrPipe()
+
 	if err != nil {
-		logger.Println(err)
+		if debug {
+			logger.Println(err)
+		}
 		fatal_if(err)
 	}
 
@@ -60,7 +79,9 @@ func Run() {
 	err = cmd.Start()
 
 	if err != nil {
-		logger.Println(err)
+		if debug {
+			logger.Println(err)
+		}
 		fatal_if(err)
 	}
 
@@ -76,11 +97,15 @@ func Run() {
 	err = cmd.Wait()
 
 	if err != nil {
-		logger.Println(err)
+		if debug {
+			logger.Println(err)
+		}
 		os.Exit(exitStatus(err))
 	}
 
-	logger.Println("Normal exit.")
+	if debug {
+		logger.Println("Normal exit.")
+	}
 }
 
 func fatal_if(err error) {

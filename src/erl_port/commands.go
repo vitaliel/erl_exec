@@ -23,8 +23,9 @@ func commandsInput(outPipe io.WriteCloser) {
 loop:
 	for {
 		cmd := readCommand()
-		logger.Println("cmd", cmd)
-
+		if debug {
+			logger.Println("cmd", cmd)
+		}
 		switch cmd.cmd {
 		case CMD_STOP:
 			break loop
@@ -32,7 +33,9 @@ loop:
 			n, err := outPipe.Write(cmd.data)
 
 			if err != nil {
-				logger.Println(err)
+				if debug {
+					logger.Println(err)
+				}
 				fatal_if(err)
 			}
 
@@ -44,14 +47,18 @@ loop:
 		}
 	}
 
-	logger.Println("Command input exited.")
+	if debug {
+		logger.Println("Command input exited.")
+	}
 }
 
 func outWriter(wg *sync.WaitGroup, input chan *command) {
 	defer wg.Done()
 
 	for msg := range input {
-		logger.Println("response writer msg", msg.cmd, msg.data)
+		if debug {
+			logger.Println("response writer msg", msg.cmd, msg.data)
+		}
 		write(msg.cmd, msg.data)
 	}
 }
@@ -64,7 +71,9 @@ func outForward(wg *sync.WaitGroup, msgType byte, out chan *command, input io.Re
 
 		n, err := input.Read(data)
 
-		logger.Println("forward from", msgType, n, err)
+		if debug {
+			logger.Println("forward from", msgType, n, err)
+		}
 
 		if n > 0 {
 			out <- &command{msgType, data[0:n]}
@@ -75,7 +84,9 @@ func outForward(wg *sync.WaitGroup, msgType byte, out chan *command, input io.Re
 		}
 
 		if err != nil {
-			logger.Println(msgType, err)
+			if debug {
+				logger.Println(msgType, err)
+			}
 			fatal_if(err)
 		}
 	}
@@ -83,7 +94,10 @@ func outForward(wg *sync.WaitGroup, msgType byte, out chan *command, input io.Re
 
 func readCommand() *command {
 	len := readLength()
-	logger.Println("input cmd: len", len)
+
+	if debug {
+		logger.Println("input cmd: len", len)
+	}
 
 	result := &command{}
 
@@ -92,7 +106,9 @@ func readCommand() *command {
 		_, err := io.ReadFull(os.Stdin, buf)
 
 		if err != nil {
-			logger.Println("Unexpected read data", err)
+			if debug {
+				logger.Println("Unexpected read data", err)
+			}
 			fatal_if(err)
 		}
 
@@ -113,10 +129,14 @@ func readLength() uint16 {
 		return 0
 	}
 
-	logger.Println("read length bytes: ", b)
+	if debug {
+		logger.Println("read length bytes: ", b)
+	}
 
 	if err != nil {
-		logger.Println("Unexpected read length", err)
+		if debug {
+			logger.Println("Unexpected read length", err)
+		}
 		fatal_if(err)
 	}
 
@@ -128,7 +148,11 @@ func write(msgType byte, data []byte) {
 	var b = []byte{0, 0}
 	b[0] = byte(len >> 8 & 0xff)
 	b[1] = byte(len & 0xff)
-	logger.Println("write", msgType, "len", b, "data", data)
+
+	if debug {
+		logger.Println("write", msgType, "len", b, "data", data)
+	}
+
 	writeExact(b)
 	writeExact([]byte{msgType})
 	writeExact(data)
@@ -139,7 +163,9 @@ func writeExact(data []byte) {
 	n, err := os.Stdout.Write(data)
 
 	if err != nil {
-		logger.Println(err)
+		if debug {
+			logger.Println(err)
+		}
 		fatal_if(err)
 	}
 
