@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 	"sync"
-	"time"
 )
 
 const (
@@ -45,28 +44,27 @@ loop:
 		}
 	}
 
-	outPipe.Close()
+	logger.Println("Command input exited.")
 }
 
 func outWriter(wg *sync.WaitGroup, input chan *command) {
 	defer wg.Done()
 
 	for msg := range input {
-		logger.Println("get msg", msg)
+		logger.Println("response writer msg", msg.cmd, msg.data)
 		write(msg.cmd, msg.data)
 	}
 }
 
 func outForward(wg *sync.WaitGroup, msgType byte, out chan *command, input io.ReadCloser) {
 	defer wg.Done()
-	data := make([]byte, 4096*2-3)
 
 	for {
-		time.Sleep(100 * time.Millisecond)
+		data := make([]byte, 4096*2-3) // do not share
 
 		n, err := input.Read(data)
 
-		logger.Println("read from", msgType, n, err)
+		logger.Println("forward from", msgType, n, err)
 
 		if n > 0 {
 			out <- &command{msgType, data[0:n]}
